@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Food Detail{% endblock %}
+
+{% block content %}
+    <h1>{{ selected_food.description }}</h1>
+    <ul>
+        {% for nutrient in nutrient_values %}
+            <li>{{ nutrient.name }}: {{ nutrient.amount }} {{ nutrient.unit }}</li>
+        {% endfor %}
+    </ul>
+    <p>Serving Size: {{ selected_food.servingSize }} {{ selected_food.servingSizeUnit }}</p>
+    <a href="{% url 'food_search' %}">Back to Search</a>
+{% endblock %}
