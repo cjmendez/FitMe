@@ -6,9 +6,15 @@
     <h1>{{ selected_food.description }}</h1>
     <ul>
         {% for nutrient in nutrient_values %}
-            <li>{{ nutrient.name }}: {{ nutrient.amount }} {{ nutrient.unit }}</li>
+            {% if nutrient.name %}
+                <li>{{ nutrient.name }}: {{ nutrient.amount }} {{ nutrient.unit }}</li>
+            {% endif %}
         {% endfor %}
     </ul>
-    <p>Serving Size: {{ selected_food.servingSize }} {{ selected_food.servingSizeUnit }}</p>
-    <a href="{% url 'food_search' %}">Back to Search</a>
+    {% if serving_size and serving_size_unit %}
+        <p>Serving Size: {{ serving_size }} {{ serving_size_unit }}</p>
+    {% else %}
+        <p>Serving size information not available.</p>
+    {% endif %}
+
 {% endblock %}

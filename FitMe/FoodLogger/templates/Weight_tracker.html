@@ -1,0 +1,88 @@
+<!-- weight_tracker.html -->
+{% extends 'base.html' %}
+{% block title %}Weight Tracker{% endblock %}
+
+{% block content %}
+  <h1>Weight Tracker</h1>
+
+  <!-- Form for adding weight entries -->
+  <form method="post" action="{% url 'add_weight_entry' %}">
+    {% csrf_token %}
+    <label for="weight">Enter Weight:</label>
+    <input type="number" id="weight" name="weight" step="0.01" required>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="{{ selected_date }}" required>
+    <button type="submit">Add Weight Entry</button>
+  </form>
+
+  <!-- Plot weight graph -->
+  <div>
+    <canvas id="weightChart" width="400" height="200"></canvas>
+  </div>
+
+  <!-- Render weight entries as a list -->
+  <h2>Weight Entries</h2>
+  <ul style="list-style-type: none; padding: 0;">
+    {% for entry in weight_entries %}
+      <li style="display: flex; align-items: center;">{{ entry.date }}: {{ entry.weight }}
+        <form method="post" action="{% url 'weight_tracker' %}">
+          {% csrf_token %}
+          <input type="hidden" name="entry_id" value="{{ entry.id }}">
+          <button type="submit" style="background-color: transparent; border: none; margin-left: auto; color: red;">x</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Retrieve weight data from Django template and convert it to JavaScript array
+    const weightData = [
+      {% for entry in weight_entries %}
+        {{ entry.weight }},
+      {% endfor %}
+    ];
+
+    // Retrieve date data from Django template and convert it to JavaScript array
+    const dateData = [
+      {% for entry in weight_entries %}
+        '{{ entry.date }}',
+      {% endfor %}
+    ];
+
+    // Get canvas element for the chart
+    const ctx = document.getElementById('weightChart').getContext('2d');
+
+    // Create line chart
+    const weightChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dateData,
+        datasets: [{
+          label: 'Weight',
+          data: weightData,
+          borderColor: 'green',
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Date'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Weight (lbs)'
+            }
+          }
+        }
+      }
+    });
+  </script>
+{% endblock %}

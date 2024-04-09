@@ -1,10 +1,12 @@
 import requests
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .api_client import search_food, get_nutrient_values
+from .models import WeightEntry
+from .forms import WeightEntryForm
+from datetime import date
 
 def home(request):
     return render(request, "home.html")
-
 
 def food_search(request):
     if request.method == 'POST':
@@ -48,16 +50,63 @@ def food_detail(request, fdc_id):
     nutrient_values = get_nutrient_values(api_key, fdc_id)
 
     if nutrient_values:
-        # Iterate over the nutrient values and update them with proper titles and measurements
-        for nutrient in nutrient_values:
-            nutrient_id = nutrient['nutrient']['id']
-            if nutrient_id in nutrient_mapping:
-                nutrient_info = nutrient_mapping[nutrient_id]
-                nutrient['name'] = nutrient_info['name']
-                nutrient['unit'] = nutrient_info['unit']
+        # Fetch additional details about the food item
+        selected_food_details = search_food(api_key, fdc_id)
+        
+        if selected_food_details:
+            selected_food = selected_food_details['foods'][0]
 
-        return render(request, 'food_detail.html', {'nutrient_values': nutrient_values})
+            # Fetch serving size
+            serving_size = None
+            serving_size_unit = None
+            if 'servingSize' in selected_food and 'servingSizeUnit' in selected_food:
+                serving_size = selected_food['servingSize']
+                serving_size_unit = selected_food['servingSizeUnit']
+
+            # Iterate over the nutrient values and update them with proper titles and measurements
+            for nutrient in nutrient_values:
+                nutrient_id = nutrient['nutrient']['id']
+                if nutrient_id in nutrient_mapping:
+                    nutrient_info = nutrient_mapping[nutrient_id]
+                    nutrient['name'] = nutrient_info['name']
+                    nutrient['unit'] = nutrient_info['unit']
+
+            return render(request, 'food_detail.html', {'selected_food': selected_food, 'nutrient_values': nutrient_values, 'serving_size': serving_size, 'serving_size_unit': serving_size_unit})
+        else:
+            error_message = 'Failed to fetch food details. Please try again later.'
+            return render(request, 'food_detail.html', {'error_message': error_message})
     else:
         error_message = 'Failed to fetch nutrient values. Please try again later.'
         return render(request, 'food_detail.html', {'error_message': error_message})
-    
+
+def add_weight_entry(request):
+    if request.method == 'POST':
+        form = WeightEntryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('weight_tracker')
+    else:
+        form = WeightEntryForm()
+    return render(request, 'add_weight_entry.html', {'form': form})
+
+def weight_tracker(request):
+    if request.method == 'POST':
+        entry_id = request.POST.get('entry_id')
+        if entry_id:
+            try:
+                entry = WeightEntry.objects.get(id=entry_id)
+                entry.delete()
+            except WeightEntry.DoesNotExist:
+                pass  # Handle the case where entry doesn't exist
+        return redirect('weight_tracker')  # Redirect to the same page after removal
+
+    today_date = date.today().strftime("%Y-%m-%d")  # Get today's date in the required format
+    selected_date = request.GET.get('selected_date', today_date)  # Get selected date from query parameters
+    weight_entries = WeightEntry.objects.filter(date=selected_date)  # Filter weight entries for the selected date
+
+    context = {
+        'today_date': today_date,
+        'selected_date': selected_date,
+        'weight_entries': weight_entries,
+    }
+    return render(request, 'weight_tracker.html', context)
