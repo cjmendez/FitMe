@@ -1,12 +1,52 @@
-import requests
+import requests, openai
 from django.shortcuts import render, redirect
-from .api_client import search_food, get_nutrient_values
-from .models import WeightEntry
+from .api_client import search_food, get_nutrient_values, CustomChatGPT
+from .models import WeightEntry, FoodEntry
 from .forms import WeightEntryForm
-from datetime import date
+from datetime import date, datetime
+from django.http import JsonResponse
 
 def home(request):
-    return render(request, "home.html")
+    if request.method == 'POST':
+        food_name = request.POST.get('food_name')
+        meal_type = request.POST.get('meal_type')
+        calories = float(request.POST.get('calories'))
+        protein = float(request.POST.get('protein'))
+        carbs = float(request.POST.get('carbs'))
+        fat = float(request.POST.get('fat'))
+        water = float(request.POST.get('water'))
+
+        FoodEntry.objects.create(
+            food_name=food_name,
+            meal_type=meal_type,
+            calories=calories,
+            protein=protein,
+            carbs=carbs,
+            fat=fat,
+            water=water
+        )
+
+    # Get today's date
+    today = datetime.now().date()
+
+    # Filter food entries for today
+    food_entries = FoodEntry.objects.filter(created_at__date=today)
+    food_entries = FoodEntry.objects.all()
+    total_calories = sum(entry.calories for entry in food_entries)
+    total_protein = sum(entry.protein for entry in food_entries)
+    total_carbs = sum(entry.carbs for entry in food_entries)
+    total_fat = sum(entry.fat for entry in food_entries)
+
+    context = {
+        'food_entries': food_entries,
+        'total_calories': total_calories,
+        'total_protein': total_protein,
+        'total_carbs': total_carbs,
+        'total_fat': total_fat,
+    }
+
+    return render(request, "home.html", context)
+
 
 def food_search(request):
     if request.method == 'POST':
@@ -110,3 +150,56 @@ def weight_tracker(request):
         'weight_entries': weight_entries,
     }
     return render(request, 'weight_tracker.html', context)
+
+def chatbot(request):
+    if request.method == 'POST':
+        input_text = request.POST.get('input_text', '')
+        output_text = CustomChatGPT(input_text)
+        return render(request, 'chatbot.html', {'input_text': input_text, 'output_text': output_text})
+    else:
+        return render(request, 'chatbot.html')
+
+def macro_calculator(request):
+    if request.method == 'POST':
+        weight = float(request.POST.get('weight'))
+        height = float(request.POST.get('height'))
+        age = int(request.POST.get('age'))
+        gender = request.POST.get('gender')
+        activity_level = float(request.POST.get('activity_level'))
+
+        # Calculate BMR based on gender
+        if gender == 'male':
+            bmr = 66 + (6.2 * weight) + (12.7 * height) - (6.76 * age)
+        else:
+            bmr = 655.1 + (4.35 * weight) + (4.7 * height) - (4.7 * age)
+        
+        # Adjust BMR based on activity level
+        tdee = bmr * activity_level
+        
+        # Calculate macros based on TDEE and user's goals
+        # For example, you can use percentages of calories for each macro
+        
+        # Assuming a typical ratio for macronutrients
+        protein_ratio = 0.3
+        carbs_ratio = 0.5
+        fat_ratio = 0.2
+        
+        protein_calories = tdee * protein_ratio
+        carbs_calories = tdee * carbs_ratio
+        fat_calories = tdee * fat_ratio
+        
+        protein_grams = protein_calories / 4  # 4 calories per gram of protein
+        carbs_grams = carbs_calories / 4      # 4 calories per gram of carbs
+        fat_grams = fat_calories / 9          # 9 calories per gram of fat
+
+        context = {
+            'bmr': bmr,
+            'tdee': tdee,
+            'protein_grams': protein_grams,
+            'carbs_grams': carbs_grams,
+            'fat_grams': fat_grams,
+        }
+
+        return render(request, "macro_calculator_result.html", context)
+
+    return render(request, "macro_calculator.html")

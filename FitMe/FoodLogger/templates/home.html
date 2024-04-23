@@ -1,5 +1,60 @@
-{% extends 'base.html' %} {% block title %} Home Page {% endblock %}
+{% extends 'base.html' %}
+{% block title %} Home Page {% endblock %}
 
 {% block content %}
-    <p class="lead">This is the home page.</p>
+    <h2>Food Logger</h2>
+
+    <form method="post" action="{% url 'home' %}">
+        {% csrf_token %}
+        <label for="food_name">Food Name:</label>
+        <input type="text" id="food_name" name="food_name" required><br><br>
+
+        <label for="meal_type">Meal Type:</label>
+        <select id="meal_type" name="meal_type" required>
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+            <option value="snack">Snack</option>
+        </select><br><br>
+
+        <!-- Add date input field -->
+        <label for="log_date">Log Date:</label>
+        <input type="date" id="log_date" name="log_date" required><br><br>
+
+        <label for="calories">Calories:</label>
+        <input type="number" id="calories" name="calories" required><br><br>
+
+        <label for="protein">Protein (g):</label>
+        <input type="number" id="protein" name="protein" required><br><br>
+
+        <label for="carbs">Carbohydrates (g):</label>
+        <input type="number" id="carbs" name="carbs" required><br><br>
+
+        <label for="fat">Fat (g):</label>
+        <input type="number" id="fat" name="fat" required><br><br>
+
+        <label for="water">Water (ml):</label>
+        <input type="number" id="water" name="water" required><br><br>
+
+        <button type="submit">Add Food</button>
+    </form>
+
+    <h2>Food Log</h2>
+    <!-- Display food logs for selected date -->
+    <form method="get" action="{% url 'home' %}">
+        <label for="view_date">View Logs for Date:</label>
+        <input type="date" id="view_date" name="view_date" required>
+        <button type="submit">View Logs</button>
+    </form>
+
+    <ul>
+        {% for entry in food_entries %}
+            <li>{{ entry.food_name }} - {{ entry.meal_type }} - Calories: {{ entry.calories }}, Protein: {{ entry.protein }}, Carbs: {{ entry.carbs }}, Fat: {{ entry.fat }}, Water: {{ entry.water }}</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Total Calories: {{ total_calories }}</h3>
+    <h3>Total Protein: {{ total_protein }}g</h3>
+    <h3>Total Carbs: {{ total_carbs }}g</h3>
+    <h3>Total Fat: {{ total_fat }}g</h3>
 {% endblock %}

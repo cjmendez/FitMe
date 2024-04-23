@@ -1,5 +1,5 @@
 # utils.py
-import requests
+import requests, openai
 
 def search_food(api_key, query):
     url = "https://api.nal.usda.gov/fdc/v1/foods/search"
@@ -31,3 +31,16 @@ def get_nutrient_values(api_key, fdc_id):
     except requests.exceptions.RequestException as e:
         print("Error:", e)
         return None
+
+openai.api_key = 'sk-proj-QiIXU49pUIzymXGaHxhnT3BlbkFJ8ur39KUZWsjHU1YRBJiM'
+messages = [{"role": "system", "content": "You are a chatbot named Nute that answers nutrition or health-related questions"}]
+
+def CustomChatGPT(user_input):
+    messages.append({"role": "user", "content": user_input})
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=messages
+    )
+    ChatGPT_reply = response["choices"][0]["message"]["content"]
+    messages.append({"role": "assistant", "content": ChatGPT_reply})
+    return ChatGPT_reply

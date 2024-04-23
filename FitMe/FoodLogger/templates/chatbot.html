@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Nute{% endblock %}
+
+{% block content %}
+<h1>Nute</h1>
+<form method="post">
+    {% csrf_token %}
+    <label for="input_text">Input Text:</label><br>
+    <textarea id="input_text" name="input_text" rows="4" cols="50"></textarea><br>
+    <input type="submit" value="Submit">
+</form>
+{% if input_text %}
+<h3>User Input:</h3>
+<p>{{ input_text }}</p>
+<h3>Assistant Response:</h3>
+<p>{{ output_text }}</p>
+{% endif %}
+{% endblock %}

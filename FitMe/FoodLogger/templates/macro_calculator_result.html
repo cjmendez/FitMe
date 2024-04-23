@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %} Macro Calculator Result {% endblock %}
+
+{% block content %}
+    <h2>Macro Calculator</h2>
+
+    <h3>Result</h3>
+
+    <p>The results below are the suggested amounts of macronutrients and food energy (Calories) you need to consume daily to maintain your weight. Each macronutrient amount is represented as a range of values. Please click whichever tab best suits your needs, or create your own plan.</p>
+
+    <h4>Balanced</h4>
+    <ul>
+        <li>Protein: {{ protein_grams }} grams/day</li>
+        <li>Range: 84 - 221 grams/day</li>
+        <li>Carbs: {{ carbs_grams }} grams/day</li>
+        <li>Range: 276 - 460 grams/day</li>
+        <li>Fat: {{ fat_grams }} grams/day</li>
+        <li>Range: 59 - 103 grams/day</li>
+        <li>Sugar: &lt;69 grams/day</li>
+        <li>Saturated Fat: &lt;29 grams/day</li>
+        <li>Food Energy: {{ tdee }} Calories/day or {{ tdee*4.184 }} kJ/day</li>
+    </ul>
+
+    <h4>Low Fat</h4>
+    <!-- You can include additional tabs for Low Carb, High Protein, and Create Your Own -->
+
+    <h3>Inputs</h3>
+
+    <p>Age: {{ age }}</p>
+    <p>Gender: {{ gender }}</p>
+    <p>Height: {{ height }} feet {{ height_inches }} inches</p>
+    <p>Weight: {{ weight }} pounds</p>
+    <p>Activity: {{ activity_level }}</p>
+    <p>Your Goal: {{ goal }}</p>
+{% endblock %}
