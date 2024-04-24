@@ -3,17 +3,112 @@
 {% block title %}Nute{% endblock %}
 
 {% block content %}
+<style>
+    body { font-family: Arial, sans-serif; }
+    .chat-container {
+        border: 2px solid #0e522d92;
+        background-color: #53d769;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 10px 0;
+    }
+
+    .darker {
+        border-color: #ccc;
+        background-color: #ddd;
+    }
+
+    .chat-container::after {
+        content: "";
+        clear: both;
+        display: table;
+    }
+
+    .chat-text {
+        float: left;
+        max-width: 80%;
+        margin-right: 20%;
+    }
+
+    .chat-text p {
+        font-size: 14px;
+        line-height: 1.6;
+        color: black;
+    }
+
+    .chat-response {
+        float: right;
+        max-width: 80%;
+        margin-left: 20%;
+        text-align: right;
+    }
+
+    .chat-response p {
+        font-size: 14px;
+        line-height: 1.6;
+        color: black;
+    }
+
+    #input_area {
+        background: white;
+        padding: 10px;
+        margin-top: 20px;
+    }
+
+    textarea {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        box-shadow: none;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        box-sizing: border-box;
+    }
+
+    input[type="submit"], input[type="button"] {
+        padding: 10px 20px;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        float: left; /* Aligns buttons side by side */
+    }
+
+    input[type="submit"] {
+        background-color: #4CAF50;
+    }
+
+    input[type="submit"]:hover {
+        background-color: #45a049;
+    }
+
+    input[type="button"] {
+        background-color: #f44336;
+        margin-left: 10px;
+    }
+
+    input[type="button"]:hover {
+        background-color: #d32f2f;
+    }
+</style>
 <h1>Nute</h1>
-<form method="post">
-    {% csrf_token %}
-    <label for="input_text">Input Text:</label><br>
-    <textarea id="input_text" name="input_text" rows="4" cols="50"></textarea><br>
-    <input type="submit" value="Submit">
-</form>
-{% if input_text %}
-<h3>User Input:</h3>
-<p>{{ input_text }}</p>
-<h3>Assistant Response:</h3>
-<p>{{ output_text }}</p>
-{% endif %}
+<div id="messages">
+    {% if conversation %}
+        {% for message in conversation %}
+            <div class="chat-container {{ message.type }}">
+                <p>{{ message.sender }}: {{ message.text }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No messages yet!</p>
+    {% endif %}
+</div>
+<div id="input_area">
+    <form method="post">
+        {% csrf_token %}
+        <textarea id="input_text" name="input_text" rows="4" placeholder="Type your message..."></textarea>
+        <input type="submit" value="Send">
+        <input type="button" value="Clear" onclick="location.href='{{ request.path }}?clear=true'">
+    </form>
+</div>
 {% endblock %}

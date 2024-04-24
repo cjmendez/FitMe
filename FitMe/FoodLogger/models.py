@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.utils import timezone
 # Create your models here.
 class WeightEntry(models.Model):
     date = models.DateField()
@@ -8,12 +8,12 @@ class WeightEntry(models.Model):
 class FoodEntry(models.Model):
     food_name = models.CharField(max_length=100)
     meal_type = models.CharField(max_length=20)
+    log_date = models.DateField(default=timezone.now)  # Added this field to store the date of the log
     calories = models.FloatField()
     protein = models.FloatField()
     carbs = models.FloatField()
     fat = models.FloatField()
-    water = models.FloatField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    water = models.FloatField()  # Assuming water is stored as a float; you may want to use IntegerField if storing in milliliters
 
     def __str__(self):
-        return self.food_name
+        return f"{self.food_name} ({self.meal_type})"

@@ -1,35 +1,40 @@
 {% extends 'base.html' %}
-{% block title %} Macro Calculator Result {% endblock %}
+{% block title %}Macro Calculator Results{% endblock %}
 
 {% block content %}
-    <h2>Macro Calculator</h2>
+    <h2 style="text-align: center;">Macro Calculator Results</h2>
+    <div class="macro-results" style="border: 2px solid #ccc; padding: 20px; max-width: 600px; margin: auto;">
 
-    <h3>Result</h3>
+        <div class="macro-row" style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="font-weight: bold;">Protein</span>
+            <span>{{ protein_grams|stringformat:"d"}} grams/day</span>
+            <span>Range: {{ protein_range }}</span>
+        </div>
+        <div class="macro-row" style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="font-weight: bold;">Carbs</span>
+            <span>{{ carbs_grams|stringformat:"d"}} grams/day</span>
+            <span>Range: {{ carbs_range }}</span>
+        </div>
+        <div class="macro-row" style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="font-weight: bold;">Fat</span>
+            <span>{{ fat_grams|stringformat:"d"}} grams/day</span>
+            <span>Range: {{ fat_range }}</span>
+        </div>
+        <div class="macro-row" style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="font-weight: bold;">Sugar</span>
+            <span>{{ sugar_grams|stringformat:"d"}} grams/day</span>
+        </div>
+        <div class="macro-row" style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="font-weight: bold;">Saturated Fat</span>
+            <span>{{ sat_fat_grams|stringformat:"d"}} grams/day</span>
+        </div>
+        <div class="macro-row" style="display: flex; justify-content: space-between;">
+            <span style="font-weight: bold;">Food Energy</span>
+            <span>{{ tdee|stringformat:"d"}} Calories/day or {{ calories_to_kj }} kJ/day</span>
+        </div>
+    </div>
 
-    <p>The results below are the suggested amounts of macronutrients and food energy (Calories) you need to consume daily to maintain your weight. Each macronutrient amount is represented as a range of values. Please click whichever tab best suits your needs, or create your own plan.</p>
-
-    <h4>Balanced</h4>
-    <ul>
-        <li>Protein: {{ protein_grams }} grams/day</li>
-        <li>Range: 84 - 221 grams/day</li>
-        <li>Carbs: {{ carbs_grams }} grams/day</li>
-        <li>Range: 276 - 460 grams/day</li>
-        <li>Fat: {{ fat_grams }} grams/day</li>
-        <li>Range: 59 - 103 grams/day</li>
-        <li>Sugar: &lt;69 grams/day</li>
-        <li>Saturated Fat: &lt;29 grams/day</li>
-        <li>Food Energy: {{ tdee }} Calories/day or {{ tdee*4.184 }} kJ/day</li>
-    </ul>
-
-    <h4>Low Fat</h4>
-    <!-- You can include additional tabs for Low Carb, High Protein, and Create Your Own -->
-
-    <h3>Inputs</h3>
-
-    <p>Age: {{ age }}</p>
-    <p>Gender: {{ gender }}</p>
-    <p>Height: {{ height }} feet {{ height_inches }} inches</p>
-    <p>Weight: {{ weight }} pounds</p>
-    <p>Activity: {{ activity_level }}</p>
-    <p>Your Goal: {{ goal }}</p>
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{% url 'home' %}" class="button" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Own</a>
+    </div>
 {% endblock %}

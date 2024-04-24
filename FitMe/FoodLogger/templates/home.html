@@ -1,60 +1,137 @@
 {% extends 'base.html' %}
-{% block title %} Home Page {% endblock %}
+{% block title %} Food Logger {% endblock %}
+
+{% block head %}
+<style>
+  .food-logger {
+    font-family: 'Arial', sans-serif;
+    background: #f7f7f7;
+    margin: 0 auto;
+    max-width: 600px;
+    padding: 20px;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 8px;
+  }
+
+  .food-logger h2 {
+    color: #4CAF50;
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .meal-section {
+    background: #fff;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .meal-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .meal-section-header h3 {
+    color: #4CAF50;
+    margin: 0;
+  }
+
+  .add-meal-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 12px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  .meal-section ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 15px 0 0;
+  }
+
+  .meal-section li {
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+  }
+
+  .meal-section li:first-child {
+    border-top: none;
+  }
+
+  .summary-bar {
+    display: flex;
+    justify-content: space-between;
+    background: #4CAF50;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-    <h2>Food Logger</h2>
+<div class="food-logger">
+    <h2>Today, 04/23</h2>
 
-    <form method="post" action="{% url 'home' %}">
-        {% csrf_token %}
-        <label for="food_name">Food Name:</label>
-        <input type="text" id="food_name" name="food_name" required><br><br>
+    <div class="summary-bar">
+        <span>0 cal intake</span>
+        <span>0 cal burned</span>
+        <span>Remaining 2,000</span>
+    </div>
 
-        <label for="meal_type">Meal Type:</label>
-        <select id="meal_type" name="meal_type" required>
-            <option value="breakfast">Breakfast</option>
-            <option value="lunch">Lunch</option>
-            <option value="dinner">Dinner</option>
-            <option value="snack">Snack</option>
-        </select><br><br>
+    <div class="meal-section">
+        <div class="meal-section-header">
+            <h3>Breakfast</h3>
+            <a href="{% url 'food_search' %}" class="add-meal-btn">+</a>
+        </div>
+        <ul>
+            <!-- Placeholder for breakfast items -->
+            <li>No foods logged yet.</li>
+        </ul>
+    </div>
 
-        <!-- Add date input field -->
-        <label for="log_date">Log Date:</label>
-        <input type="date" id="log_date" name="log_date" required><br><br>
+    <div class="meal-section">
+        <div class="meal-section-header">
+            <h3>Lunch</h3>
+            <a href="#" class="add-meal-btn">+</a>
+        </div>
+        <ul>
+            <!-- Placeholder for lunch items -->
+            <li>No foods logged yet.</li>
+        </ul>
+    </div>
 
-        <label for="calories">Calories:</label>
-        <input type="number" id="calories" name="calories" required><br><br>
+    <div class="meal-section">
+        <div class="meal-section-header">
+            <h3>Dinner</h3>
+            <a href="#" class="add-meal-btn">+</a>
+        </div>
+        <ul>
+            <!-- Placeholder for dinner items -->
+            <li>No foods logged yet.</li>
+        </ul>
+    </div>
 
-        <label for="protein">Protein (g):</label>
-        <input type="number" id="protein" name="protein" required><br><br>
-
-        <label for="carbs">Carbohydrates (g):</label>
-        <input type="number" id="carbs" name="carbs" required><br><br>
-
-        <label for="fat">Fat (g):</label>
-        <input type="number" id="fat" name="fat" required><br><br>
-
-        <label for="water">Water (ml):</label>
-        <input type="number" id="water" name="water" required><br><br>
-
-        <button type="submit">Add Food</button>
-    </form>
-
-    <h2>Food Log</h2>
-    <!-- Display food logs for selected date -->
-    <form method="get" action="{% url 'home' %}">
-        <label for="view_date">View Logs for Date:</label>
-        <input type="date" id="view_date" name="view_date" required>
-        <button type="submit">View Logs</button>
-    </form>
-
-    <ul>
-        {% for entry in food_entries %}
-            <li>{{ entry.food_name }} - {{ entry.meal_type }} - Calories: {{ entry.calories }}, Protein: {{ entry.protein }}, Carbs: {{ entry.carbs }}, Fat: {{ entry.fat }}, Water: {{ entry.water }}</li>
-        {% endfor %}
-    </ul>
-
-    <h3>Total Calories: {{ total_calories }}</h3>
-    <h3>Total Protein: {{ total_protein }}g</h3>
-    <h3>Total Carbs: {{ total_carbs }}g</h3>
-    <h3>Total Fat: {{ total_fat }}g</h3>
+    <div class="meal-section">
+        <div class="meal-section-header">
+            <h3>Snack</h3>
+            <a href="#" class="add-meal-btn">+</a>
+        </div>
+        <ul>
+            <!-- Placeholder for snack items -->
+            <li>No foods logged yet.</li>
+        </ul>
+    </div>
+</div>
 {% endblock %}

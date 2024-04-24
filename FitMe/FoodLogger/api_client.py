@@ -32,7 +32,7 @@ def get_nutrient_values(api_key, fdc_id):
         print("Error:", e)
         return None
 
-openai.api_key = 'sk-proj-QiIXU49pUIzymXGaHxhnT3BlbkFJ8ur39KUZWsjHU1YRBJiM'
+openai.api_key = 'sk-proj-tvRthHZ2kMtkdkYKvRLVT3BlbkFJKdUavh7VlFp3Ryjal6l0' # Replace with your actual API key
 messages = [{"role": "system", "content": "You are a chatbot named Nute that answers nutrition or health-related questions"}]
 
 def CustomChatGPT(user_input):

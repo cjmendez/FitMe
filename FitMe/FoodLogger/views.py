@@ -4,12 +4,18 @@ from .api_client import search_food, get_nutrient_values, CustomChatGPT
 from .models import WeightEntry, FoodEntry
 from .forms import WeightEntryForm
 from datetime import date, datetime
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.db.models import Sum
 
 def home(request):
-    if request.method == 'POST':
+    if request.method == 'POST' and 'caloric_limit' in request.POST:
+        # Set the caloric limit in the session
+        request.session['caloric_limit'] = float(request.POST.get('caloric_limit'))
+    elif request.method == 'POST':
+        # Add a new food entry
         food_name = request.POST.get('food_name')
         meal_type = request.POST.get('meal_type')
+        log_date = request.POST.get('log_date')
         calories = float(request.POST.get('calories'))
         protein = float(request.POST.get('protein'))
         carbs = float(request.POST.get('carbs'))
@@ -19,6 +25,7 @@ def home(request):
         FoodEntry.objects.create(
             food_name=food_name,
             meal_type=meal_type,
+            log_date=log_date,
             calories=calories,
             protein=protein,
             carbs=carbs,
@@ -26,26 +33,36 @@ def home(request):
             water=water
         )
 
-    # Get today's date
-    today = datetime.now().date()
+    # Set a default caloric limit if none is set
+    if 'caloric_limit' not in request.session:
+        request.session['caloric_limit'] = 2000  # Default value
 
-    # Filter food entries for today
-    food_entries = FoodEntry.objects.filter(created_at__date=today)
-    food_entries = FoodEntry.objects.all()
-    total_calories = sum(entry.calories for entry in food_entries)
-    total_protein = sum(entry.protein for entry in food_entries)
-    total_carbs = sum(entry.carbs for entry in food_entries)
-    total_fat = sum(entry.fat for entry in food_entries)
+    # Retrieve the caloric limit from the session
+    caloric_limit = request.session['caloric_limit']
+
+    # Date filtering for logs
+    selected_date = request.GET.get('view_date') or datetime.now().date()
+    food_entries = FoodEntry.objects.filter(log_date=selected_date)
+
+    # Totals for the day
+    totals = food_entries.aggregate(
+        total_calories=Sum('calories'),
+        total_protein=Sum('protein'),
+        total_carbs=Sum('carbs'),
+        total_fat=Sum('fat')
+    )
 
     context = {
         'food_entries': food_entries,
-        'total_calories': total_calories,
-        'total_protein': total_protein,
-        'total_carbs': total_carbs,
-        'total_fat': total_fat,
+        'total_calories': totals['total_calories'] or 0,
+        'total_protein': totals['total_protein'] or 0,
+        'total_carbs': totals['total_carbs'] or 0,
+        'total_fat': totals['total_fat'] or 0,
+        'caloric_limit': caloric_limit,
+        'selected_date': selected_date,
     }
 
-    return render(request, "home.html", context)
+    return render(request, 'home.html', context)
 
 
 def food_search(request):
@@ -152,34 +169,55 @@ def weight_tracker(request):
     return render(request, 'weight_tracker.html', context)
 
 def chatbot(request):
+    # Check if the 'clear' button has been pressed
+    if request.GET.get('clear', '') == 'true':
+        request.session['conversation'] = []  # Reset conversation
+        request.session.modified = 'true'
+        return redirect('/chatbot/')  # Redirect to clean the URL
+
+    if 'conversation' not in request.session:
+        request.session['conversation'] = []
+
     if request.method == 'POST':
         input_text = request.POST.get('input_text', '')
         output_text = CustomChatGPT(input_text)
-        return render(request, 'chatbot.html', {'input_text': input_text, 'output_text': output_text})
-    else:
-        return render(request, 'chatbot.html')
+        request.session['conversation'].append({'sender': 'User', 'text': input_text, 'type': 'chat-text'})
+        request.session['conversation'].append({'sender': 'Nute', 'text': output_text, 'type': 'chat-response'})
+        request.session.modified = True
+        return redirect('/chatbot/')
+
+    conversation = request.session.get('conversation', [])
+    return render(request, 'chatbot.html', {'conversation': conversation})
 
 def macro_calculator(request):
     if request.method == 'POST':
         weight = float(request.POST.get('weight'))
-        height = float(request.POST.get('height'))
+        height_feet = int(request.POST.get('height_feet'))
+        height_inches = int(request.POST.get('height_inches'))
         age = int(request.POST.get('age'))
         gender = request.POST.get('gender')
-        activity_level = float(request.POST.get('activity_level'))
+        activity_level = float(request.POST.get('activity'))
+        goal = request.POST.get('goal')
+
+        # Convert height to inches
+        height = (height_feet * 12) + height_inches
 
         # Calculate BMR based on gender
         if gender == 'male':
-            bmr = 66 + (6.2 * weight) + (12.7 * height) - (6.76 * age)
+            bmr = 66 + (6.23 * weight) + (12.7 * height) - (6.76 * age)
         else:
-            bmr = 655.1 + (4.35 * weight) + (4.7 * height) - (4.7 * age)
-        
+            bmr = 655 + (4.35 * weight) + (4.7 * height) - (4.7 * age)
+
         # Adjust BMR based on activity level
         tdee = bmr * activity_level
         
+        # Adjust TDEE based on goal
+        if goal == 'lose':
+            tdee -= 500  # Create a calorie deficit for weight loss
+        elif goal == 'gain':
+            tdee += 500  # Add a calorie surplus for weight gain
+
         # Calculate macros based on TDEE and user's goals
-        # For example, you can use percentages of calories for each macro
-        
-        # Assuming a typical ratio for macronutrients
         protein_ratio = 0.3
         carbs_ratio = 0.5
         fat_ratio = 0.2
@@ -193,13 +231,14 @@ def macro_calculator(request):
         fat_grams = fat_calories / 9          # 9 calories per gram of fat
 
         context = {
-            'bmr': bmr,
-            'tdee': tdee,
             'protein_grams': protein_grams,
             'carbs_grams': carbs_grams,
             'fat_grams': fat_grams,
+            'tdee': tdee,
+            # Add other context variables if necessary
         }
 
         return render(request, "macro_calculator_result.html", context)
-
-    return render(request, "macro_calculator.html")
+    else:
+        # For a GET request, just render the form page.
+        return render(request, "macro_calculator.html")

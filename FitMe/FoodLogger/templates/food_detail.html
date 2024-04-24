@@ -3,18 +3,65 @@
 {% block title %}Food Detail{% endblock %}
 
 {% block content %}
-    <h1>{{ selected_food.description }}</h1>
-    <ul>
-        {% for nutrient in nutrient_values %}
-            {% if nutrient.name %}
-                <li>{{ nutrient.name }}: {{ nutrient.amount }} {{ nutrient.unit }}</li>
-            {% endif %}
-        {% endfor %}
-    </ul>
+<style>
+    .nutrition-label {
+        font-family: Arial, sans-serif;
+        border: 1px solid #000;
+        padding: 10px;
+        width: 300px;
+        margin: auto;
+    }
+    .nutrition-header, .nutrition-subheader, .nutrition-calories {
+        font-weight: bold;
+        text-align: center;
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+    .nutrition-calories {
+        font-size: 24px;
+    }
+    .nutrition-row {
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px solid #000;
+        padding: 2px 0;
+    }
+    .bold {
+        font-weight: bold;
+    }
+</style>
+
+<div class="nutrition-label">
+    <div class="nutrition-header">{{ selected_food.description }}</div>
     {% if serving_size and serving_size_unit %}
-        <p>Serving Size: {{ serving_size }} {{ serving_size_unit }}</p>
+        <div class="nutrition-row">
+            <div>Serving Size:</div>
+            <div>{{ serving_size }} {{ serving_size_unit }}</div>
+        </div>
     {% else %}
-        <p>Serving size information not available.</p>
+        <div>Serving size information not available.</div>
     {% endif %}
+    
+    <!-- Calories should be displayed prominently under serving size -->
+    {% for nutrient in nutrient_values %}
+        {% if nutrient.name == 'Calories (Energy)' %}
+            <div class="nutrition-subheader">Amount Per Serving</div>
+            <div class="nutrition-row nutrition-calories">
+                <div>Calories</div>
+                <div>{{ nutrient.amount }}</div>
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    <!-- The rest of the nutrients -->
+    {% for nutrient in nutrient_values %}
+        {% if nutrient.name != 'Calories (Energy)' %}
+            <div class="nutrition-row">
+                <div class="{% if nutrient.name == 'Total Fat' or nutrient.name == 'Carbohydrates' or nutrient.name == 'Protein' %}bold{% endif %}">{{ nutrient.name }}</div>
+                <div>{{ nutrient.amount }} {{ nutrient.unit }}</div>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
 
 {% endblock %}
