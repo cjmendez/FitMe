@@ -5,65 +5,79 @@ from .models import WeightEntry, FoodEntry
 from .forms import WeightEntryForm
 from datetime import date, datetime
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Sum
+from django.db.models import Sum, FloatField
+from django.db.models.functions import Coalesce
 
 def home(request):
-    if request.method == 'POST' and 'caloric_limit' in request.POST:
-        # Set the caloric limit in the session
-        request.session['caloric_limit'] = float(request.POST.get('caloric_limit'))
-    elif request.method == 'POST':
-        # Add a new food entry
-        food_name = request.POST.get('food_name')
-        meal_type = request.POST.get('meal_type')
-        log_date = request.POST.get('log_date')
-        calories = float(request.POST.get('calories'))
-        protein = float(request.POST.get('protein'))
-        carbs = float(request.POST.get('carbs'))
-        fat = float(request.POST.get('fat'))
-        water = float(request.POST.get('water'))
+    return render(request, 'home.html')
 
-        FoodEntry.objects.create(
-            food_name=food_name,
-            meal_type=meal_type,
-            log_date=log_date,
-            calories=calories,
-            protein=protein,
-            carbs=carbs,
-            fat=fat,
-            water=water
-        )
+def diary(request):
+    today = datetime.now().date()
 
-    # Set a default caloric limit if none is set
-    if 'caloric_limit' not in request.session:
-        request.session['caloric_limit'] = 2000  # Default value
+    # Handling form submissions
+    if request.method == 'POST':
+        if 'caloric_limit' in request.POST:
+            request.session['caloric_limit'] = float(request.POST.get('caloric_limit'))
+            request.session['protein_limit'] = float(request.POST.get('protein_limit'))
+            request.session['carbs_limit'] = float(request.POST.get('carbs_limit'))
+            request.session['fat_limit'] = float(request.POST.get('fat_limit'))
+        elif 'food_name' in request.POST:
+            FoodEntry.objects.create(
+                food_name=request.POST.get('food_name'),
+                meal_type=request.POST.get('meal_type'),
+                log_date=request.POST.get('log_date', today),
+                calories=float(request.POST.get('calories')),
+                protein=float(request.POST.get('protein')),
+                carbs=float(request.POST.get('carbs')),
+                fat=float(request.POST.get('fat')),
+                water=float(request.POST.get('water', 0))  # Assuming water is optional
+            )
 
-    # Retrieve the caloric limit from the session
-    caloric_limit = request.session['caloric_limit']
-
-    # Date filtering for logs
-    selected_date = request.GET.get('view_date') or datetime.now().date()
-    food_entries = FoodEntry.objects.filter(log_date=selected_date)
-
-    # Totals for the day
+    # Retrieve food entries and calculate totals
+    food_entries = FoodEntry.objects.filter(log_date=today)
     totals = food_entries.aggregate(
-        total_calories=Sum('calories'),
-        total_protein=Sum('protein'),
-        total_carbs=Sum('carbs'),
-        total_fat=Sum('fat')
+        total_calories=Coalesce(Sum('calories', output_field=FloatField()), 0.0),
+        total_protein=Coalesce(Sum('protein', output_field=FloatField()), 0.0),
+        total_carbs=Coalesce(Sum('carbs', output_field=FloatField()), 0.0),
+        total_fat=Coalesce(Sum('fat', output_field=FloatField()), 0.0)
     )
+
+    # Retrieve session values or set defaults
+    caloric_limit = int(request.session.get('caloric_limit', 2000))
+    protein_limit = int(request.session.get('protein_limit', 50))
+    carbs_limit = int(request.session.get('carbs_limit', 225))
+    fat_limit = int(request.session.get('fat_limit', 78))
+
+    # Calculate remaining nutrients and percentages
+    remaining_calories = caloric_limit - totals['total_calories']
+    remaining_protein = protein_limit - totals['total_protein']
+    remaining_carbs = carbs_limit - totals['total_carbs']
+    remaining_fat = fat_limit - totals['total_fat']
+
+    protein_percentage = (totals['total_protein'] / protein_limit * 100) if protein_limit else 0
+    carbs_percentage = (totals['total_carbs'] / carbs_limit * 100) if carbs_limit else 0
+    fat_percentage = (totals['total_fat'] / fat_limit * 100) if fat_limit else 0
+    calories_percentage = (totals['total_calories'] / caloric_limit * 100) if caloric_limit else 0
 
     context = {
         'food_entries': food_entries,
-        'total_calories': totals['total_calories'] or 0,
-        'total_protein': totals['total_protein'] or 0,
-        'total_carbs': totals['total_carbs'] or 0,
-        'total_fat': totals['total_fat'] or 0,
+        'total_calories': totals['total_calories'],
         'caloric_limit': caloric_limit,
-        'selected_date': selected_date,
+        'remaining_calories': remaining_calories,
+        'remaining_protein': remaining_protein,
+        'remaining_carbs': remaining_carbs,
+        'remaining_fat': remaining_fat,
+        'protein_limit': protein_limit,
+        'carbs_limit': carbs_limit,
+        'fat_limit': fat_limit,
+        'protein_percentage': int(protein_percentage),
+        'carbs_percentage': int(carbs_percentage),
+        'fat_percentage': int(fat_percentage),
+        'calories_percentage': int(calories_percentage),
+        'selected_date': today.strftime('%m/%d/%Y'),
     }
 
-    return render(request, 'home.html', context)
-
+    return render(request, 'diary.html', context)
 
 def food_search(request):
     if request.method == 'POST':
@@ -72,14 +86,37 @@ def food_search(request):
 
         # Perform food search
         search_results = search_food(api_key, search_query)
+        filtered_results = []
 
         if search_results:
-            return render(request, 'food_search_results.html', {'search_results': search_results})
+            print("API returned foods:", search_results['foods'])  # Debugging line
+            # Filter results based on serving size being a valid number greater than zero
+            for food in search_results['foods']:
+                if has_valid_serving_size(food):
+                    filtered_results.append(food)
+                else:
+                    print("Filtered out:", food['description'], food.get('servingSize'))  # Debugging line
+
+            print("Filtered foods:", filtered_results)  # Debugging line
+            if filtered_results:
+                return render(request, 'food_search_results.html', {'search_results': filtered_results})
+            else:
+                return render(request, 'food_search_results.html', {'error_message': 'No foods found with valid serving sizes.'})
         else:
             error_message = 'Failed to fetch search results. Please try again later.'
             return render(request, 'food_search_results.html', {'error_message': error_message})
     else:
         return render(request, 'food_search_results.html')
+
+def has_valid_serving_size(food):
+    """Check if the serving size is a valid number greater than zero."""
+    serving_size = food.get('servingSize')
+    try:
+        valid = float(serving_size) > 0
+        print("Checking serving size:", serving_size, "Valid:", valid)  # Debugging line
+        return valid
+    except (TypeError, ValueError):
+        return False
 
 def food_detail(request, fdc_id):
     api_key = 'lwalpcTrahR9d5sAfz7T4rRQHLkhUBOt59H68pc9'  # Replace with your actual API key
@@ -100,6 +137,15 @@ def food_detail(request, fdc_id):
         1162: {'name': 'Vitamin C', 'unit': 'mg'},
         1087: {'name': 'Calcium', 'unit': 'mg'},
         1089: {'name': 'Iron', 'unit': 'mg'},
+        1092: {'name': 'Potassium', 'unit': 'mg'},
+        1090: {'name': 'Magnesium', 'unit': 'mg'},
+        1085: {'name': 'Zinc', 'unit': 'mg'},
+        1110: {'name': 'Vitamin D', 'unit': 'IU'},
+        1175: {'name': 'Vitamin B12', 'unit': 'µg'},
+        1109: {'name': 'Vitamin E', 'unit': 'mg'},
+        1177: {'name': 'Folate', 'unit': 'µg'},
+        1185: {'name': 'Niacin (Vitamin B3)', 'unit': 'mg'},
+        1183: {'name': 'Vitamin K', 'unit': 'µg'}
         # Add more mappings for other nutrients as needed
     }
 
@@ -198,6 +244,7 @@ def macro_calculator(request):
         gender = request.POST.get('gender')
         activity_level = float(request.POST.get('activity'))
         goal = request.POST.get('goal')
+        diet_type = request.POST.get('diet_type', 'balanced')  # Default to balanced
 
         # Convert height to inches
         height = (height_feet * 12) + height_inches
@@ -210,22 +257,36 @@ def macro_calculator(request):
 
         # Adjust BMR based on activity level
         tdee = bmr * activity_level
-        
+
         # Adjust TDEE based on goal
         if goal == 'lose':
             tdee -= 500  # Create a calorie deficit for weight loss
         elif goal == 'gain':
             tdee += 500  # Add a calorie surplus for weight gain
 
-        # Calculate macros based on TDEE and user's goals
-        protein_ratio = 0.3
-        carbs_ratio = 0.5
-        fat_ratio = 0.2
-        
+        # Define macro ratios based on diet type
+        if diet_type == 'high protein':
+            protein_ratio = 0.40
+            carbs_ratio = 0.30
+            fat_ratio = 0.30
+        elif diet_type == 'low carb':
+            protein_ratio = 0.30
+            carbs_ratio = 0.20
+            fat_ratio = 0.50
+        elif diet_type == 'low fat':
+            protein_ratio = 0.35
+            carbs_ratio = 0.45
+            fat_ratio = 0.20
+        else:  # Balanced or any other types
+            protein_ratio = 0.30
+            carbs_ratio = 0.40
+            fat_ratio = 0.30
+
+        # Calculate macros based on TDEE and ratios
         protein_calories = tdee * protein_ratio
         carbs_calories = tdee * carbs_ratio
         fat_calories = tdee * fat_ratio
-        
+
         protein_grams = protein_calories / 4  # 4 calories per gram of protein
         carbs_grams = carbs_calories / 4      # 4 calories per gram of carbs
         fat_grams = fat_calories / 9          # 9 calories per gram of fat
@@ -235,6 +296,7 @@ def macro_calculator(request):
             'carbs_grams': carbs_grams,
             'fat_grams': fat_grams,
             'tdee': tdee,
+            'diet_type': diet_type,
             # Add other context variables if necessary
         }
 
@@ -242,3 +304,4 @@ def macro_calculator(request):
     else:
         # For a GET request, just render the form page.
         return render(request, "macro_calculator.html")
+

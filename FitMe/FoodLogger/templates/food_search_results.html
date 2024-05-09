@@ -1,17 +1,25 @@
 {% extends 'base.html' %}
 
-{% block title %}Food Search Results{% endblock %}
+{% block title %}
+Food Search Results
+{% endblock %}
 
 {% block content %}
-    <h1>Food Search Results</h1>
-    <form method="post" action="{% url 'food_search' %}">
-        {% csrf_token %}
-        <ul>
-            {% for food in search_results.foods %}
-                <li>
-                    <a href="{% url 'food_detail' food.fdcId %}">{{ food.description }}</a>
-                </li>
-            {% endfor %}
-        </ul>
-    </form>
+<h1>Food Search Results</h1>
+
+{% if search_results %}
+    <ul>
+        {% for food in search_results %}
+            <li>
+                <a href="{% url 'food_detail' food.fdcId %}">
+                    {{ food.description }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% elif error_message %}
+    <p>{{ error_message }}</p>
+{% else %}
+    <p>Try searching for a food item.</p>
+{% endif %}
 {% endblock %}

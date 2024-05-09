@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block title %}Food Logger{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
+<div class="food-logger">
+    <h2>Today, {{ selected_date }}</h2>
+
+    <div class="summary-bar">
+        <span>{{ totals.total_calories|default_if_none:"0" }} cal intake, Remaining {{ remaining_calories }} cal</span>
+        <div class="progress" style="height: 20px;">
+            <div class="progress-bar" role="progressbar"
+                 style="width: {{ totals.total_calories|percent_of:caloric_limit }}%; background-color: #0d700e;"
+                 aria-valuenow="{{ totals.total_calories }}" aria-valuemin="0" aria-valuemax="{{ caloric_limit }}">
+                Calories: {{ totals.total_calories|default_if_none:"0" }}/{{ caloric_limit }}
+            </div>
+        </div>
+        <div class="progress" style="height: 20px;">
+            <div class="progress-bar" role="progressbar"
+                 style="width: {{ totals.total_protein|percent_of:protein_limit }}%; background-color: #0d700e;"
+                 aria-valuenow="{{ totals.total_protein }}" aria-valuemin="0" aria-valuemax="{{ protein_limit }}">
+                Protein: {{ totals.total_protein|default_if_none:"0" }}g/{{ protein_limit }}g
+            </div>
+        </div>
+        <div class="progress" style="height: 20px;">
+            <div class="progress-bar" role="progressbar"
+                 style="width: {{ totals.total_carbs|percent_of:carbs_limit }}%; background-color: #0d700e;"
+                 aria-valuenow="{{ totals.total_carbs }}" aria-valuemin="0" aria-valuemax="{{ carbs_limit }}">
+                Carbs: {{ totals.total_carbs|default_if_none:"0" }}g/{{ carbs_limit }}g
+            </div>
+        </div>
+        <div class="progress" style="height: 20px;">
+            <div class="progress-bar" role="progressbar"
+                 style="width: {{ totals.total_fat|percent_of:fat_limit }}%; background-color: #0d700e;"
+                 aria-valuenow="{{ totals.total_fat }}" aria-valuemin="0" aria-valuemax="{{ fat_limit }}">
+                Fat: {{ totals.total_fat|default_if_none:"0" }}g/{{ fat_limit }}g
+            </div>
+        </div>
+    </div>
+
+    <!-- Meal Sections -->
+    <div class="meal-section">
+        <div class="meal-section-header">
+            <h3>Breakfast</h3>
+            <a href="{% url 'food_search' %}" class="add-meal-btn">+</a>
+        </div>
+        <ul>
+            {% for entry in breakfast_entries %}
+            <li>{{ entry.food_name }} - {{ entry.calories }} calories</li>
+            {% empty %}
+            <li>No foods logged yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="meal-section">
+        <div class="meal-section-header">
+            <h3>Lunch</h3>
+            <a href="{% url 'food_search' %}" class="add-meal-btn">+</a>
+        </div>
+        <ul>
+            {% for entry in lunch_entries %}
+            <li>{{ entry.food_name }} - {{ entry.calories }} calories</li>
+            {% empty %}
+            <li>No foods logged yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="meal-section">
+        <div class="meal-section-header">
+            <h3>Dinner</h3>
+            <a href="{% url 'food_search' %}" class="add-meal-btn">+</a>
+        </div>
+        <ul>
+            {% for entry in dinner_entries %}
+            <li>{{ entry.food_name }} - {{ entry.calories }} calories</li>
+            {% empty %}
+            <li>No foods logged yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="meal-section">
+        <div class="meal-section-header">
+            <h3>Snack</h3>
+            <a href="{% url 'food_search' %}" class="add-meal-btn">+</a>
+        </div>
+        <ul>
+            {% for entry in snack_entries %}
+            <li>{{ entry.food_name }} - {{ entry.calories }} calories</li>
+            {% empty %}
+            <li>No foods logged yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
