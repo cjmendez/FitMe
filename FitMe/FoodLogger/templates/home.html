@@ -1,27 +1,43 @@
 {% extends 'base.html' %}
 {% load static %}
-
-{% block title %}Food Logger{% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block content %}
-    <!-- Content specific to the home page -->
-    <div class="py-5 text-center">
-        <h1>Welcome to FitMe!</h1>
-        <img src="{% static 'Pokeball-FitMe.png' %}" alt="FitMe Logo" style="width: 150px; height: auto; margin-top: 20px;">
-        <p class="lead">Your one-stop solution for tracking your fitness and nutrition.</p>
-    </div>
-    
-    <div class="row">
-        <div class="col-md-6">
-            <h2>Food Diary</h2>
-            <p>Keep an eye on your daily intake with our food logger that track calories, macros, and nutrition.</p>
-            <p><a class="btn btn-primary" href="{% url 'macro_calculator' %}" role="button">Learn more &raquo;</a></p>
-        </div>
-        <div class="col-md-6">
-            <h2>Weight Tracker</h2>
-            <p>Monitor your weight loss journey and set goals to achieve your ideal weight.</p>
-            <p><a class="btn btn-primary" href="{% url 'weight_tracker' %}" role="button">Learn more &raquo;</a></p>
-        </div>
-    </div>
-{% endblock %}
+<style>
+    .btn-primary {
+        background-color: #0d700e !important; /* Green color */
+        border-color: #0d700e; /* Green border, if needed */
+    }
+</style>
+<!-- Content specific to the home page -->
+<div class="py-5 text-center">
+    <h1>Welcome to FitMe!</h1>
+    <img src="{% static 'Pokeball-FitMe.png' %}" alt="FitMe Logo" style="width: 150px; height: auto; margin-top: 20px;">
+    <p class="lead">Your one-stop solution for tracking your fitness and nutrition.</p>
+</div>
 
+<div class="row">
+    <div class="col-md-6">
+        <h2>Food Diary</h2>
+        <p>Keep an eye on your daily intake with our food logger that tracks calories, macros, and nutrition.</p>
+        <p><a class="btn btn-primary" href="{% url 'diary' %}" role="button">Learn more &raquo;</a></p>
+    </div>
+    <div class="col-md-6">
+        <h2>Weight Tracker</h2>
+        <p>Monitor your weight loss journey and set goals to achieve your ideal weight.</p>
+        <p><a class="btn btn-primary" href="{% url 'weight_tracker' %}" role="button">Learn more &raquo;</a></p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <h2>Chatbot</h2>
+        <p>Interact with our AI-driven chatbot for quick assistance or nutritional advice.</p>
+        <p><a class="btn btn-primary" href="{% url 'chatbot' %}" role="button">Chat Now &raquo;</a></p>
+    </div>
+    <div class="col-md-6">
+        <h2>Nutrition Calculator</h2>
+        <p>Calculate your optimal intake of macros and calories based on your personal goals.</p>
+        <p><a class="btn btn-primary" href="{% url 'macro_calculator' %}" role="button">Calculate Now &raquo;</a></p>
+    </div>
+</div>
+{% endblock %}

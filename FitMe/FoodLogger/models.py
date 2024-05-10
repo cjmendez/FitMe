@@ -13,7 +13,6 @@ class FoodEntry(models.Model):
     protein = models.FloatField()
     carbs = models.FloatField()
     fat = models.FloatField()
-    water = models.FloatField()  # Assuming water is stored as a float; you may want to use IntegerField if storing in milliliters
-
+    
     def __str__(self):
         return f"{self.food_name} ({self.meal_type})"

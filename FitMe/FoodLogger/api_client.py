@@ -1,5 +1,7 @@
 # utils.py
-import requests, openai
+import requests, openai, os
+from dotenv import load_dotenv
+load_dotenv()
 
 def search_food(api_key, query):
     url = "https://api.nal.usda.gov/fdc/v1/foods/search"
@@ -32,7 +34,7 @@ def get_nutrient_values(api_key, fdc_id):
         print("Error:", e)
         return None
 
-openai.api_key = 'sk-proj-tvRthHZ2kMtkdkYKvRLVT3BlbkFJKdUavh7VlFp3Ryjal6l0' # Replace with your actual API key
+openai.api_key = os.getenv("SECRET_KEY") 
 messages = [{"role": "system", "content": "You are a chatbot named Nute that answers nutrition or health-related questions"}]
 
 def CustomChatGPT(user_input):

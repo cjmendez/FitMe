@@ -12,10 +12,13 @@ def home(request):
     return render(request, 'home.html')
 
 def diary(request):
-    today = datetime.now().date()
+    selected_date = request.GET.get('selected_date', date.today().strftime('%Y-%m-%d'))
+    selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date() 
 
+    food_entries = FoodEntry.objects.filter(log_date=selected_date)
     # Handling form submissions
     if request.method == 'POST':
+        print(request.POST)
         if 'caloric_limit' in request.POST:
             request.session['caloric_limit'] = float(request.POST.get('caloric_limit'))
             request.session['protein_limit'] = float(request.POST.get('protein_limit'))
@@ -25,16 +28,14 @@ def diary(request):
             FoodEntry.objects.create(
                 food_name=request.POST.get('food_name'),
                 meal_type=request.POST.get('meal_type'),
-                log_date=request.POST.get('log_date', today),
+                log_date=request.POST.get('log_date', selected_date),
                 calories=float(request.POST.get('calories')),
                 protein=float(request.POST.get('protein')),
                 carbs=float(request.POST.get('carbs')),
                 fat=float(request.POST.get('fat')),
-                water=float(request.POST.get('water', 0))  # Assuming water is optional
             )
 
     # Retrieve food entries and calculate totals
-    food_entries = FoodEntry.objects.filter(log_date=today)
     totals = food_entries.aggregate(
         total_calories=Coalesce(Sum('calories', output_field=FloatField()), 0.0),
         total_protein=Coalesce(Sum('protein', output_field=FloatField()), 0.0),
@@ -58,26 +59,35 @@ def diary(request):
     carbs_percentage = (totals['total_carbs'] / carbs_limit * 100) if carbs_limit else 0
     fat_percentage = (totals['total_fat'] / fat_limit * 100) if fat_limit else 0
     calories_percentage = (totals['total_calories'] / caloric_limit * 100) if caloric_limit else 0
-
+    
     context = {
         'food_entries': food_entries,
         'total_calories': totals['total_calories'],
+        'total_protein': totals['total_protein'],
+        'total_carbs': totals['total_carbs'],
+        'total_fat': totals['total_fat'],
         'caloric_limit': caloric_limit,
+        'protein_limit': protein_limit,
+        'carbs_limit': carbs_limit,
+        'fat_limit': fat_limit,
         'remaining_calories': remaining_calories,
         'remaining_protein': remaining_protein,
         'remaining_carbs': remaining_carbs,
         'remaining_fat': remaining_fat,
-        'protein_limit': protein_limit,
-        'carbs_limit': carbs_limit,
-        'fat_limit': fat_limit,
         'protein_percentage': int(protein_percentage),
         'carbs_percentage': int(carbs_percentage),
         'fat_percentage': int(fat_percentage),
         'calories_percentage': int(calories_percentage),
-        'selected_date': today.strftime('%m/%d/%Y'),
+        'selected_date': selected_date.strftime('%Y-%m-%d'),
     }
 
     return render(request, 'diary.html', context)
+
+def delete_food_entry(request):
+    if request.method == 'POST':
+        entry_id = request.POST.get('entry_id')
+        FoodEntry.objects.filter(id=entry_id).delete()
+        return redirect('diary')
 
 def food_search(request):
     if request.method == 'POST':
@@ -89,15 +99,15 @@ def food_search(request):
         filtered_results = []
 
         if search_results:
-            print("API returned foods:", search_results['foods'])  # Debugging line
+            #print("API returned foods:", search_results['foods'])  # Debugging line
             # Filter results based on serving size being a valid number greater than zero
             for food in search_results['foods']:
                 if has_valid_serving_size(food):
                     filtered_results.append(food)
-                else:
-                    print("Filtered out:", food['description'], food.get('servingSize'))  # Debugging line
+                #else:
+                    #print("Filtered out:", food['description'], food.get('servingSize'))  # Debugging line
 
-            print("Filtered foods:", filtered_results)  # Debugging line
+            #print("Filtered foods:", filtered_results)  # Debugging line
             if filtered_results:
                 return render(request, 'food_search_results.html', {'search_results': filtered_results})
             else:

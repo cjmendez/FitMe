@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load nutrition_tags %}  <!-- Make sure to load your custom template tags -->
 
 {% block title %}Food Detail{% endblock %}
 
@@ -17,9 +19,6 @@
         margin-top: 5px;
         margin-bottom: 5px;
     }
-    .nutrition-calories {
-        font-size: 24px;
-    }
     .nutrition-row {
         display: flex;
         justify-content: space-between;
@@ -28,6 +27,11 @@
     }
     .bold {
         font-weight: bold;
+    }
+    .center-button {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
     }
 </style>
 
@@ -41,19 +45,18 @@
     {% else %}
         <div>Serving size information not available.</div>
     {% endif %}
-    
-    <!-- Calories should be displayed prominently under serving size -->
+
+    <!-- Displaying Calories first, prominently -->
     {% for nutrient in nutrient_values %}
         {% if nutrient.name == 'Calories (Energy)' %}
-            <div class="nutrition-subheader">Amount Per Serving</div>
             <div class="nutrition-row nutrition-calories">
                 <div>Calories</div>
-                <div>{{ nutrient.amount }}</div>
+                <div>{{ nutrient.amount }} {{ nutrient.unit }}</div>
             </div>
         {% endif %}
     {% endfor %}
 
-    <!-- The rest of the nutrients -->
+    <!-- Displaying the rest of the nutrients -->
     {% for nutrient in nutrient_values %}
         {% if nutrient.name != 'Calories (Energy)' %}
             <div class="nutrition-row">
@@ -62,6 +65,20 @@
             </div>
         {% endif %}
     {% endfor %}
+
+    <!-- Form to log the nutrients to the diary, button centered -->
+    <div class="center-button">
+        <form action="{% url 'diary' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="food_name" value="{{ selected_food.description }}">
+            <input type="hidden" name="calories" value="{{ nutrient_values|get_nutrient:'Calories (Energy)' }}">
+            <input type="hidden" name="protein" value="{{ nutrient_values|get_nutrient:'Protein' }}">
+            <input type="hidden" name="carbs" value="{{ nutrient_values|get_nutrient:'Carbohydrates' }}">
+            <input type="hidden" name="fat" value="{{ nutrient_values|get_nutrient:'Total Fat' }}">
+            <input type="hidden" name="meal_type" value="lunch">  <!-- Modify as needed -->
+            <button type="submit" class="btn btn-primary">Log Food</button>
+        </form>
+    </div>
 </div>
 
 {% endblock %}
